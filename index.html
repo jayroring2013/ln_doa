@@ -25,10 +25,10 @@ body {
 .wrap { max-width:1440px; margin:0 auto; padding:28px 24px 72px; }
 
 /* ── Header ─────────────────────────────────── */
-.header { margin-bottom:24px; }
+.header { margin-bottom:24px; text-align:center; }
 .header-eyebrow {
   font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:8px;
+  color:var(--accent); margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:8px;
 }
 .header-eyebrow::before {
   content:''; width:20px; height:2px; background:var(--accent); border-radius:2px;
@@ -38,7 +38,7 @@ h1 {
   background:linear-gradient(135deg,#e8ecf4 40%,#8892aa);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
-.subtitle { margin-top:8px; color:var(--muted); font-size:13px; line-height:1.6; max-width:760px; }
+.subtitle { margin-top:8px; color:var(--muted); font-size:13px; line-height:1.6; max-width:760px; margin-left:auto; margin-right:auto; }
 
 /* ── Stats ──────────────────────────────────── */
 .stats {
@@ -335,9 +335,8 @@ tr.mobile-meta { display:none !important; }
 <body>
 <div class="wrap">
   <header class="header">
-    <div class="header-eyebrow">Cộng đồng Light Novel Việt Nam</div>
-    <h1>Bảng xếp hạng Light Novel</h1>
-    <p class="subtitle">Xếp hạng theo Điểm LN, ngày phát hành gần nhất, tình trạng phát hành tại Việt Nam và khả năng bị drop. Đã cập nhật thêm ID 968. Dữ liệu được tính lại từ workbook mới nhất.</p>
+    <h1>Bảng xếp hạng Light Novel Việt Nam Ded or Alive</h1>
+    <p class="subtitle">Xếp hạng theo Điểm LN, ngày phát hành gần nhất, tình trạng phát hành tại Việt Nam và khả năng bị drop.</p>
   </header>
   <section class="stats" id="stats"></section>
   <section class="toolbar">
@@ -427,7 +426,7 @@ const trollEvalLabel = r => {
   }
   return evalLabel(r.Evalution);
 };
-const trollPillClass = r => r['Series Code'] === 'index' ? 'pill-troll' : `pill-${safe(r.Evalution)}`;
+const trollPillClass = r => r['Series Code'] === 'index' ? 'pill pill-troll' : `pill pill-${safe(r.Evalution)}`;
 const releaseStatus = r => r['Trạng thái'] || (r.Evalution === 'Completed' ? 'Hoàn thành' : r.Evalution === 'Dead' ? 'Lâu lắm rồi chưa có tập mới' : r.Evalution === 'Dropped' ? 'Drop' : 'Đang phát hành');
 const releaseStatusClass = r => {
   const rs = releaseStatus(r);
