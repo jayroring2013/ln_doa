@@ -355,7 +355,7 @@ tr.mobile-meta { display:none !important; }
       <select id="publisherFilter"><option value="">Tất cả nhà phát hành</option></select>
       <select id="releaseStatusFilter">
         <option value="">Tất cả trạng thái</option>
-        <option value="Đang phát hành" selected>Đang phát hành</option>
+        <option value="Đang phát hành">Đang phát hành</option>
         <option value="Lâu lắm rồi chưa có tập mới">Lâu rồi chưa ra</option>
         <option value="Đã bắt kịp bản gốc JP">Đã bắt kịp JP</option>
         <option value="Drop">Đã drop</option>
@@ -395,8 +395,8 @@ tr.mobile-meta { display:none !important; }
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://zragvkqsslfyarjbjmmz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyYWd2a3Fzc2xmeWFyamJqbW16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2MzM2ODQsImV4cCI6MjA4ODIwOTY4NH0.vtoAbrfmJtKppUVzu2CZpq_iNeqZV0Cbt0RBu__EHvM";
+const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 const SUPABASE_TABLE = "ln_series_ranking";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -408,7 +408,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 let DATA = [];
-let state = { search:'', status:'', publisher:'', releaseStatus:'Đang phát hành', sortBy:'scoreRelease' };
+let state = { search:'', status:'', publisher:'', releaseStatus:'', sortBy:'scoreRelease' };
 const $ = id => document.getElementById(id);
 const safe = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const safeAttr = s => safe(s).replace(/\n/g, '&#10;');
@@ -519,7 +519,7 @@ function getFilteredRows() {
   rows.sort(sorters[state.sortBy] || sorters.scoreRelease);
   return rows;
 }
-function render() {
+let render = function render_impl() {
   const rows = getFilteredRows();
   updateStats(rows);
   $('empty').hidden = rows.length !== 0;
@@ -674,7 +674,6 @@ function buildMobileMetaRow(r, score, riskVal) {
   </tr>`;
 }
 
-const _origRender = render;
 function renderWithMobile() {
   const rows = getFilteredRows();
   updateStats(rows);
@@ -715,8 +714,8 @@ function renderWithMobile() {
   }).join('');
 }
 
-// Override the render function
-window.render = renderWithMobile;
+// Override the original render with the mobile-aware version
+render = renderWithMobile;
 
 </script>
 </body></html>
