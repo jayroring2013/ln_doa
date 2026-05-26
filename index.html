@@ -297,7 +297,7 @@ tr.mobile-meta { display:none !important; }
   /* ── Mobile meta row ── */
   tr.mobile-meta {
     display:block !important;
-    padding:8px 12px 14px;
+    padding:6px 12px 14px 50px; /* 50px left indent aligns with cover start */
     border-bottom:1px solid rgba(37,45,66,.6);
   }
   tr.mobile-meta:last-child { border-bottom:none; }
@@ -310,7 +310,7 @@ tr.mobile-meta { display:none !important; }
   .m-chip {
     display:inline-flex; align-items:center; gap:6px;
     background:var(--surface2); border:1px solid var(--line);
-    border-radius:9px; padding:6px 10px;
+    border-radius:9px; padding:6px 10px; flex-shrink:0;
   }
   .m-chip .m-label {
     font-size:9px; font-weight:800; text-transform:uppercase;
@@ -318,7 +318,7 @@ tr.mobile-meta { display:none !important; }
   }
   .m-chip strong { color:var(--text); font-size:13px; font-weight:900; }
   .m-chip .mini-bar {
-    width:40px; height:4px; border-radius:99px;
+    width:48px; height:5px; border-radius:99px;
     background:var(--surface3); overflow:hidden;
   }
   .m-chip .mini-bar-fill { height:100%; border-radius:99px; }
@@ -379,7 +379,7 @@ tr.mobile-meta { display:none !important; }
           <th data-sort="rank" style="width:54px">Hạng</th>
           <th>Series</th>
           <th data-sort="volumes" style="width:70px">Số tập</th>
-          <th data-sort="release" style="width:130px">Ngày phát hành</th>
+          <th data-sort="release" style="width:130px">Ngày phát hành gần nhất</th>
           <th style="width:120px">Nhà PH</th>
           <th data-sort="releaseStatus" style="width:130px">Trạng thái</th>
           <th data-sort="score" style="width:100px">Điểm đánh giá</th>
@@ -663,7 +663,7 @@ function buildMobileMetaRow(r, score, riskVal) {
         <span class="mini-bar"><span class="mini-bar-fill score-bar-fill" style="width:${scoreBar}%"></span></span>
       </span>
       <span class="m-chip">
-        <span class="m-label">Drop</span>
+        <span class="m-label">Khả năng Drop</span>
         <strong>${pctVal(r['Khả năng drop (Drop %)'])}%</strong>
         <span class="mini-bar"><span class="mini-bar-fill risk-bar-fill" style="width:${riskBar}%"></span></span>
       </span>
