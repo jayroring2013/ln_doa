@@ -154,6 +154,16 @@ tbody tr:hover { background:rgba(124,106,245,.06); }
 .pill-Limping { background:rgba(234,179,8,.15); color:#facc15; border:1px solid rgba(234,179,8,.25); }
 .pill-Dead { background:rgba(249,115,22,.15); color:#fb923c; border:1px solid rgba(249,115,22,.25); }
 .pill-Dropped { background:rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(239,68,68,.25); }
+/* 🥚 Easter egg pill */
+.pill-troll {
+  background:linear-gradient(90deg,rgba(239,68,68,.2),rgba(249,115,22,.2),rgba(234,179,8,.2));
+  color:#fbbf24; border:1px solid rgba(249,115,22,.35);
+  animation:troll-pulse 1.4s ease-in-out infinite;
+}
+@keyframes troll-pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:.75; transform:scale(1.06); }
+}
 .rs-publishing { background:rgba(34,197,94,.12); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
 .rs-completed { background:rgba(56,189,248,.12); color:#7dd3fc; border:1px solid rgba(56,189,248,.2); }
 .rs-dead { background:rgba(249,115,22,.12); color:#fb923c; border:1px solid rgba(249,115,22,.2); }
@@ -408,6 +418,16 @@ const fmtDate = d => d ? new Date(d).toLocaleDateString('vi-VN', { year:'numeric
 const pctVal = n => { const x = Number(n || 0); return x <= 1 ? Math.round(x * 100) : Math.round(x); };
 const fmtPercent = n => `${pctVal(n)}%`;
 const evalLabel = s => ({Completed:'Hoàn thành', Good:'Tốt', Limping:'Cầm chừng', Dead:'Gần chết', Dropped:'Đã drop'}[s] || s || '—');
+
+// 🥚 Easter egg: special troll label for a certain cursed series
+const TROLL_LABELS = ['Siêu ded 💀', 'Quá ded ☠️', 'Omega ded 🪦'];
+const trollEvalLabel = r => {
+  if (r['Series Code'] === 'index') {
+    return TROLL_LABELS[Math.floor(Date.now() / 3000) % TROLL_LABELS.length];
+  }
+  return evalLabel(r.Evalution);
+};
+const trollPillClass = r => r['Series Code'] === 'index' ? 'pill-troll' : `pill-${safe(r.Evalution)}`;
 const releaseStatus = r => r['Trạng thái'] || (r.Evalution === 'Completed' ? 'Hoàn thành' : r.Evalution === 'Dead' ? 'Lâu lắm rồi chưa có tập mới' : r.Evalution === 'Dropped' ? 'Drop' : 'Đang phát hành');
 const releaseStatusClass = r => {
   const rs = releaseStatus(r);
@@ -520,7 +540,7 @@ function render() {
       <td><span class="pill ${releaseStatusClass(r)}">${safe(releaseStatus(r))}</span></td>
       <td><div class="has-tooltip" data-tip="${safeAttr(scoreTooltip(r))}"><div class="score-num">${score.toFixed(1)}</div><div class="score-bar-wrap"><div class="score-bar-fill" style="width:${scoreBar}%"></div></div></div></td>
       <td><div class="has-tooltip" data-tip="${safeAttr(dropTooltip(r))}"><div class="risk-num">${fmtPercent(r['Khả năng drop (Drop %)'])}</div><div class="risk-bar-wrap"><div class="risk-bar-fill" style="width:${riskBar}%"></div></div></div></td>
-      <td><span class="pill pill-${safe(r.Evalution)}">${safe(evalLabel(r.Evalution))}</span></td>
+      <td><span class="${trollPillClass(r)}">${safe(trollEvalLabel(r))}</span></td>
     </tr>`;
   }).join('');
 }
@@ -648,7 +668,7 @@ function buildMobileMetaRow(r, score, riskVal) {
         <strong>${pctVal(r['Khả năng drop (Drop %)'])}%</strong>
         <span class="mini-bar"><span class="mini-bar-fill risk-bar-fill" style="width:${riskBar}%"></span></span>
       </span>
-      <span class="pill pill-${safe(r.Evalution)}">${safe(evalLabel(r.Evalution))}</span>
+      <span class="${trollPillClass(r)}">${safe(trollEvalLabel(r))}</span>
       <span class="pill ${releaseStatusClass(r)}">${safe(releaseStatus(r))}</span>
     </div></td>
   </tr>`;
@@ -687,7 +707,7 @@ function renderWithMobile() {
       <td><span class="pill ${releaseStatusClass(r)}">${safe(releaseStatus(r))}</span></td>
       <td><div class="has-tooltip" data-tip="${safeAttr(scoreTooltip(r))}"><div class="score-num">${score.toFixed(1)}</div><div class="score-bar-wrap"><div class="score-bar-fill" style="width:${scoreBar}%"></div></div></div></td>
       <td><div class="has-tooltip" data-tip="${safeAttr(dropTooltip(r))}"><div class="risk-num">${fmtPercent(r['Khả năng drop (Drop %)'])}</div><div class="risk-bar-wrap"><div class="risk-bar-fill" style="width:${riskBar}%"></div></div></div></td>
-      <td><span class="pill pill-${safe(r.Evalution)}">${safe(evalLabel(r.Evalution))}</span></td>
+      <td><span class="${trollPillClass(r)}">${safe(trollEvalLabel(r))}</span></td>
     </tr>`;
 
     const metaRow = buildMobileMetaRow(r, score, riskBar);
