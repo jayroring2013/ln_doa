@@ -131,7 +131,7 @@ tbody tr:hover { background:rgba(124,106,245,.06); }
 
 .series-cell { display:flex; gap:12px; align-items:center; min-width:280px; }
 .cover {
-  width:68px; height:96px; object-fit:cover; border-radius:8px; flex-shrink:0;
+  width:136px; height:192px; object-fit:cover; border-radius:8px; flex-shrink:0;
   background:var(--surface3); box-shadow:0 4px 12px rgba(0,0,0,.4);
 }
 .title { font-weight:800; font-size:13px; line-height:1.35; color:var(--text); max-width:320px; }
@@ -203,133 +203,120 @@ tr.mobile-meta { display:none !important; }
 @media(max-width:640px) {
   :root { --toolbar-h: 56px; }
 
-  .wrap { padding:14px 12px 80px; }
+  .wrap { padding:12px 10px 80px; }
 
   /* Header */
-  h1 { font-size:22px; }
+  h1 { font-size:21px; }
   .subtitle { font-size:12px; }
 
   /* Stats: horizontal scroll strip */
   .stats {
     display:flex; flex-wrap:nowrap; gap:8px;
-    overflow-x:auto; padding-bottom:4px; margin-bottom:14px;
+    overflow-x:auto; padding-bottom:4px; margin-bottom:12px;
     -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
   .stats::-webkit-scrollbar { display:none; }
-  .stat {
-    flex:0 0 auto; min-width:100px; padding:12px 14px;
-    border-radius:14px;
-  }
+  .stat { flex:0 0 auto; min-width:96px; padding:11px 13px; border-radius:12px; }
   .stat .label { font-size:8px; }
-  .stat .value { font-size:22px; margin-top:3px; }
+  .stat .value { font-size:20px; margin-top:3px; }
 
   /* Toolbar: sticky, compact */
   .toolbar {
-    border-radius:14px; padding:10px 12px; gap:8px;
-    flex-wrap:nowrap; overflow-x:visible;
-    position:sticky; top:0;
+    border-radius:12px; padding:10px 12px; gap:8px;
+    flex-wrap:nowrap; position:sticky; top:0;
   }
   .search-wrap { flex:1 1 auto; min-width:0; }
-  .filter-panel select { width:100%; min-width:0; font-size:13px; padding:10px 30px 10px 12px; }
+  .filter-panel select { width:100%; min-width:0; font-size:13px; padding:11px 30px 11px 12px; }
 
-  /* Table → Card layout */
+  /* ── Re-enable mobile-only elements ── */
+  tr.mobile-meta { display:block !important; }
+  .series-sub { display:flex; }
+  .filter-toggle { display:flex; }
+  .filter-panel { display:none; flex-direction:column; gap:8px; width:100%; border-top:1px solid var(--line); padding-top:10px; margin-top:2px; }
+  .filter-panel.open { display:flex; }
+
+  /* ── Table → Cards ── */
   .table-wrap { border-radius:14px; overflow:clip; }
   table { display:block; }
   thead { display:none; }
-  tbody { display:flex; flex-direction:column; gap:0; }
+  tbody { display:flex; flex-direction:column; }
 
-  tbody tr {
-    display:grid;
-    grid-template-columns:auto 1fr;
-    grid-template-rows:auto auto;
-    column-gap:12px;
-    padding:14px 12px;
-    border-bottom:1px solid rgba(37,45,66,.6);
-    align-items:start;
-    position:relative;
+  /* Every data row: cover left, info right */
+  tbody tr:not(.mobile-meta) {
+    display:flex;
+    flex-direction:row;
+    gap:0;
+    padding:14px 12px 10px;
+    border-bottom:none; /* meta row carries the border */
+    align-items:flex-start;
   }
-  tbody tr:last-child { border-bottom:none; }
-  tbody tr:hover { background:rgba(124,106,245,.06); }
 
-  /* Cell 1: rank badge — top-left */
+  /* Rank cell: narrow left column */
   td.rank-cell {
-    grid-column:1; grid-row:1 / 3;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:flex-start;
-    padding:0; width:auto;
-    padding-top:2px;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:0 10px 0 0; width:38px; flex-shrink:0; padding-top:3px;
   }
-  .rank-badge { width:32px; height:32px; font-size:11px; min-width:unset; padding:0; }
+  .rank-badge { width:30px; height:30px; min-width:unset; padding:0; font-size:10px; border-radius:8px; }
 
-  /* Cell 2: series info — top-right */
-  td:nth-child(2) {
-    grid-column:2; grid-row:1;
-    padding:0;
+  /* Series cell: cover + text side by side */
+  td:nth-child(2) { padding:0; flex:1; min-width:0; }
+  .series-cell { flex-direction:row; gap:12px; align-items:flex-start; min-width:0; }
+
+  /* Cover: big & bold */
+  .cover { width:110px; height:156px; border-radius:10px; flex-shrink:0; }
+
+  /* Text stack next to cover */
+  .series-cell > div { flex:1; min-width:0; display:flex; flex-direction:column; gap:0; }
+  .title { font-size:14px; font-weight:800; line-height:1.35; max-width:none; }
+  .meta { font-size:10px; margin-top:5px; }
+
+  /* Publisher + date under meta */
+  .series-sub {
+    display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; align-items:center;
   }
-  .series-cell {
-    flex-direction:row; min-width:0; gap:10px; align-items:flex-start;
+  .series-sub .pub-pill {
+    font-size:10px; font-weight:700; color:var(--muted);
+    background:var(--surface3); border-radius:6px; padding:3px 7px;
   }
-  .cover { width:56px; height:80px; border-radius:7px; }
-  .title { font-size:13px; max-width:none; line-height:1.3; }
-  .meta { font-size:10px; }
+  .series-sub .date-text { font-size:10px; color:var(--dim); font-weight:600; }
 
-  /* Cell 3 onwards: hidden individually — we use a data-row instead */
-  td:nth-child(3),
-  td:nth-child(4),
-  td:nth-child(5) { display:none; }
+  /* Hide desktop-only cells */
+  td:nth-child(3), td:nth-child(4), td:nth-child(5),
+  td:nth-child(6), td:nth-child(7), td:nth-child(8), td:nth-child(9) { display:none; }
 
-  /* Cell 6 (release status) → shown inline in series area via JS */
-  td:nth-child(6) { display:none; }
-
-  /* Cell 7 (score), Cell 8 (drop), Cell 9 (eval) → bottom row */
-  td:nth-child(7),
-  td:nth-child(8),
-  td:nth-child(9) {
-    display:none; /* handled by mobile-meta row */
-  }
-
-  /* Re-enable mobile-only elements inside this breakpoint */
-  tr.mobile-meta { display:flex !important; }
-  .series-sub { display:flex; }
-  .filter-toggle { display:flex; }
-  .filter-panel { display:none; }
-  .filter-panel.open { display:flex; }
-
-  /* Mobile meta row: injected by JS as a real <tr class="mobile-meta"> */
+  /* ── Mobile meta row ── */
   tr.mobile-meta {
-    display:flex; flex-wrap:wrap; gap:6px;
-    padding:0 12px 12px;
+    display:block !important;
+    padding:8px 12px 14px;
     border-bottom:1px solid rgba(37,45,66,.6);
-    grid-column:unset; grid-template-columns:unset;
-    background:transparent;
-    margin-top:-6px;
   }
-  tr.mobile-meta td {
-    padding:0; border:none; display:block;
+  tr.mobile-meta:last-child { border-bottom:none; }
+  tr.mobile-meta td { padding:0; border:none; display:block; }
+
+  /* Chips container */
+  .m-chips {
+    display:flex; flex-wrap:wrap; gap:6px; align-items:center;
   }
   .m-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    background:var(--surface2); border:1px solid var(--line); border-radius:8px;
-    padding:5px 8px; font-size:11px; font-weight:600; color:var(--muted);
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface2); border:1px solid var(--line);
+    border-radius:9px; padding:6px 10px;
   }
-  .m-chip .m-label { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); }
-  .m-chip strong { color:var(--text); font-size:12px; font-weight:800; }
+  .m-chip .m-label {
+    font-size:9px; font-weight:800; text-transform:uppercase;
+    letter-spacing:.07em; color:var(--dim);
+  }
+  .m-chip strong { color:var(--text); font-size:13px; font-weight:900; }
   .m-chip .mini-bar {
-    width:36px; height:3px; border-radius:99px; background:var(--surface3); overflow:hidden;
+    width:40px; height:4px; border-radius:99px;
+    background:var(--surface3); overflow:hidden;
   }
   .m-chip .mini-bar-fill { height:100%; border-radius:99px; }
   .m-chip .score-bar-fill { background:linear-gradient(90deg,#ef4444 0%,#eab308 50%,#22c55e 100%); }
   .m-chip .risk-bar-fill { background:linear-gradient(90deg,#22c55e 0%,#eab308 40%,#ef4444 80%); }
 
-  /* Publisher + date shown as small text under title */
-  .series-sub {
-    display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; align-items:center;
-  }
-  .series-sub .pub-pill {
-    font-size:10px; font-weight:700; color:var(--muted);
-    background:var(--surface3); border-radius:6px; padding:2px 6px;
-  }
-  .series-sub .date-text { font-size:10px; color:var(--dim); font-weight:600; }
+  /* Pills in meta row slightly bigger */
+  tr.mobile-meta .pill { font-size:11px; padding:5px 10px; }
 
   .empty { padding:32px 16px; font-size:12px; }
 }
@@ -650,7 +637,7 @@ function buildMobileMetaRow(r, score, riskVal) {
   const riskBar  = Math.max(0, Math.min(100, riskVal));
   const pctVal   = n => { const x = Number(n || 0); return x <= 1 ? Math.round(x * 100) : Math.round(x); };
   return `<tr class="mobile-meta">
-    <td colspan="9">
+    <td colspan="9"><div class="m-chips">
       <span class="m-chip">
         <span class="m-label">Điểm</span>
         <strong>${score.toFixed(1)}</strong>
@@ -661,9 +648,9 @@ function buildMobileMetaRow(r, score, riskVal) {
         <strong>${pctVal(r['Khả năng drop (Drop %)'])}%</strong>
         <span class="mini-bar"><span class="mini-bar-fill risk-bar-fill" style="width:${riskBar}%"></span></span>
       </span>
-      <span class="pill pill-${safe(r.Evalution)}" style="font-size:10px;padding:3px 8px">${safe(evalLabel(r.Evalution))}</span>
-      <span class="pill ${releaseStatusClass(r)}" style="font-size:10px;padding:3px 8px">${safe(releaseStatus(r))}</span>
-    </td>
+      <span class="pill pill-${safe(r.Evalution)}">${safe(evalLabel(r.Evalution))}</span>
+      <span class="pill ${releaseStatusClass(r)}">${safe(releaseStatus(r))}</span>
+    </div></td>
   </tr>`;
 }
 
