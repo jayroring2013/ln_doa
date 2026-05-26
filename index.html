@@ -543,7 +543,7 @@ let render = function render_impl() {
       <td><span class="${trollPillClass(r)}">${safe(trollEvalLabel(r))}</span></td>
     </tr>`;
   }).join('');
-}
+};
 ['search','statusFilter','publisherFilter','releaseStatusFilter','sortBy'].forEach(id => {
   $(id).addEventListener('input', e => {
     const key = id === 'statusFilter' ? 'status' : id === 'publisherFilter' ? 'publisher' : id === 'releaseStatusFilter' ? 'releaseStatus' : id;
