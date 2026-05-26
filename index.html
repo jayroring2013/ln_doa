@@ -3,51 +3,152 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bảng xếp hạng Light Novel</title>
+<title>Bảng xếp hạng Light Novel VN còn sống hay đã tèo? </title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:#0c0e16; --surface:#131722; --surface2:#1a1f2e; --surface3:#222840;
   --text:#e8ecf4; --muted:#8892aa; --dim:#4a5470; --line:#252d42;
-  --accent:#7c6af5; --good:#22c55e; --limping:#eab308; --dead:#f97316; --dropped:#ef4444; --completed:#38bdf8;
+  --accent:#7c6af5; --accent-dim:rgba(124,106,245,.15);
+  --good:#22c55e; --limping:#eab308; --dead:#f97316; --dropped:#ef4444; --completed:#38bdf8;
+  --radius-card: 16px;
+  --toolbar-h: 62px;
 }
-* { box-sizing:border-box; margin:0; padding:0; }
-body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-.wrap { max-width:1440px; margin:0 auto; padding:32px 28px 64px; }
-.header { margin-bottom:28px; }
-.header-eyebrow { font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
-h1 { font-size:clamp(26px,3.5vw,44px); font-weight:900; letter-spacing:-.03em; line-height:1.1; }
-.subtitle { margin-top:10px; color:var(--muted); font-size:14px; line-height:1.6; max-width:760px; }
-.stats { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:20px; }
-.stat { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 18px; }
-.stat .label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
-.stat .value { font-size:28px; font-weight:900; margin-top:6px; }
-.toolbar { background:rgba(19,23,34,.94); border:1px solid var(--line); border-radius:18px; padding:14px 16px; margin-bottom:20px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; position:sticky; top:0; z-index:20; backdrop-filter:blur(16px); }
-.search-wrap { flex:1 1 260px; }
-input, select { background:var(--surface2); border:1px solid var(--line); border-radius:12px; color:var(--text); font:inherit; font-size:13px; padding:10px 12px; outline:none; }
-input { width:100%; font-size:14px; }
-select { min-width:140px; cursor:pointer; }
-input:focus, select:focus { border-color:var(--accent); }
-.table-wrap { border-radius:20px; border:1px solid var(--line); background:var(--surface); overflow:clip; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh;
+}
+
+/* ── Layout ─────────────────────────────────── */
+.wrap { max-width:1440px; margin:0 auto; padding:28px 24px 72px; }
+
+/* ── Header ─────────────────────────────────── */
+.header { margin-bottom:24px; }
+.header-eyebrow {
+  font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:8px;
+}
+.header-eyebrow::before {
+  content:''; width:20px; height:2px; background:var(--accent); border-radius:2px;
+}
+h1 {
+  font-size:clamp(22px,4.5vw,44px); font-weight:900; letter-spacing:-.03em; line-height:1.1;
+  background:linear-gradient(135deg,#e8ecf4 40%,#8892aa);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.subtitle { margin-top:8px; color:var(--muted); font-size:13px; line-height:1.6; max-width:760px; }
+
+/* ── Stats ──────────────────────────────────── */
+.stats {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px;
+}
+.stat {
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:14px 16px; position:relative; overflow:hidden;
+}
+.stat::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:var(--accent); opacity:.45;
+}
+.stat .label { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+.stat .value { font-size:24px; font-weight:900; margin-top:4px; letter-spacing:-.02em; }
+
+/* ── Toolbar ─────────────────────────────────── */
+.toolbar {
+  background:rgba(19,23,34,.94); border:1px solid var(--line); border-radius:16px;
+  padding:12px 14px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:8px;
+  align-items:center; position:sticky; top:0; z-index:20; backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+.search-wrap { flex:1 1 260px; position:relative; }
+.search-wrap svg {
+  position:absolute; left:10px; top:50%; transform:translateY(-50%);
+  width:15px; height:15px; color:var(--dim); pointer-events:none;
+}
+input {
+  width:100%; background:var(--surface2); border:1px solid var(--line);
+  border-radius:10px; color:var(--text); font:inherit; font-size:13px;
+  padding:9px 12px 9px 32px; outline:none; transition:border-color .15s;
+}
+input:focus { border-color:var(--accent); }
+input::placeholder { color:var(--dim); }
+select {
+  background:var(--surface2); border:1px solid var(--line); border-radius:10px;
+  color:var(--text); font:inherit; font-size:12px; font-weight:600;
+  padding:9px 28px 9px 10px; outline:none; cursor:pointer;
+  appearance:none; -webkit-appearance:none; min-width:130px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238892aa' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 8px center;
+  transition:border-color .15s;
+}
+select:focus { border-color:var(--accent); }
+select option { background:#1a1f2e; }
+
+/* ── Mobile filter toggle ────────────────────── */
+.filter-toggle {
+  display:none; align-items:center; gap:6px; background:var(--surface2);
+  border:1px solid var(--line); border-radius:10px; padding:9px 12px;
+  font:inherit; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer;
+  white-space:nowrap;
+}
+.filter-toggle svg { width:14px; height:14px; }
+.filter-toggle.active { color:var(--accent); border-color:var(--accent); }
+.filter-badge {
+  background:var(--accent); color:#fff; border-radius:99px;
+  font-size:10px; font-weight:800; padding:1px 6px; line-height:1.4;
+}
+.filter-panel {
+  display:contents; /* visible by default on desktop */
+}
+
+/* ── Table (desktop) ─────────────────────────── */
+.table-wrap { border-radius:18px; border:1px solid var(--line); background:var(--surface); overflow:clip; }
 table { width:100%; border-collapse:collapse; }
-thead { background:var(--surface2); position:sticky; top:65px; z-index:10; }
-th { padding:12px 14px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); text-align:left; white-space:nowrap; cursor:pointer; }
-td { padding:12px 14px; border-bottom:1px solid rgba(37,45,66,.6); vertical-align:middle; font-size:14px; }
+thead { background:var(--surface2); position:sticky; top:var(--toolbar-h); z-index:10; }
+th {
+  padding:11px 14px; font-size:9.5px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.1em; color:var(--muted); text-align:left; white-space:nowrap;
+  cursor:pointer; user-select:none; border-bottom:1px solid var(--line);
+  transition:color .15s;
+}
+th:hover { color:var(--text); }
+td { padding:11px 14px; border-bottom:1px solid rgba(37,45,66,.5); vertical-align:middle; font-size:13px; }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr { transition:background .1s; }
 tbody tr:hover { background:rgba(124,106,245,.06); }
-.rank-cell { text-align:center; width:56px; }
-.rank-badge { display:inline-flex; align-items:center; justify-content:center; min-width:36px; height:36px; padding:0 8px; border-radius:10px; font-size:13px; font-weight:900; background:var(--surface3); color:var(--muted); }
+
+.rank-cell { text-align:center; width:54px; }
+.rank-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:34px; height:34px; padding:0 8px; border-radius:9px;
+  font-size:12px; font-weight:900; background:var(--surface3); color:var(--muted);
+}
 .rank-1 { background:linear-gradient(135deg,#f6d860,#e8a800); color:#5a3b00; }
 .rank-2 { background:linear-gradient(135deg,#d8dde8,#a5afc0); color:#2a3040; }
 .rank-3 { background:linear-gradient(135deg,#e8a86e,#c47730); color:#3d1e05; }
-.series-cell { display:flex; gap:12px; align-items:center; min-width:300px; }
-.cover { width:68px; height:96px; object-fit:cover; border-radius:8px; flex-shrink:0; background:var(--surface3); box-shadow:0 4px 12px rgba(0,0,0,.4); }
-.title { font-weight:800; font-size:14px; line-height:1.3; color:var(--text); max-width:340px; }
-.meta { margin-top:4px; font-size:11px; color:var(--dim); font-weight:600; }
-.score-num { font-size:20px; font-weight:900; line-height:1; }
-.risk-num { font-size:16px; font-weight:900; line-height:1; }
-.score-bar-wrap, .risk-bar-wrap { width:72px; height:5px; border-radius:99px; background:var(--surface3); overflow:hidden; margin-top:6px; }
+
+.series-cell { display:flex; gap:12px; align-items:center; min-width:280px; }
+.cover {
+  width:68px; height:96px; object-fit:cover; border-radius:8px; flex-shrink:0;
+  background:var(--surface3); box-shadow:0 4px 12px rgba(0,0,0,.4);
+}
+.title { font-weight:800; font-size:13px; line-height:1.35; color:var(--text); max-width:320px; }
+.meta { margin-top:4px; font-size:10px; color:var(--dim); font-weight:600; }
+
+.score-num { font-size:19px; font-weight:900; line-height:1; }
+.risk-num { font-size:15px; font-weight:900; line-height:1; }
+.score-bar-wrap,.risk-bar-wrap {
+  width:68px; height:4px; border-radius:99px; background:var(--surface3); overflow:hidden; margin-top:5px;
+}
 .score-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#ef4444 0%,#eab308 50%,#22c55e 100%); }
 .risk-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#22c55e 0%,#eab308 40%,#ef4444 80%); }
-.pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; font-size:11px; font-weight:800; letter-spacing:.02em; white-space:nowrap; }
+
+.pill {
+  display:inline-flex; align-items:center; border-radius:999px;
+  padding:4px 9px; font-size:10px; font-weight:800; letter-spacing:.02em; white-space:nowrap;
+}
 .pill-Completed { background:rgba(56,189,248,.15); color:#38bdf8; border:1px solid rgba(56,189,248,.25); }
 .pill-Good { background:rgba(34,197,94,.15); color:#4ade80; border:1px solid rgba(34,197,94,.25); }
 .pill-Limping { background:rgba(234,179,8,.15); color:#facc15; border:1px solid rgba(234,179,8,.25); }
@@ -58,14 +159,176 @@ tbody tr:hover { background:rgba(124,106,245,.06); }
 .rs-dead { background:rgba(249,115,22,.12); color:#fb923c; border:1px solid rgba(249,115,22,.2); }
 .rs-dropped { background:rgba(239,68,68,.12); color:#fca5a5; border:1px solid rgba(239,68,68,.2); }
 .rs-caught-up { background:rgba(124,106,245,.15); color:#a78bfa; border:1px solid rgba(124,106,245,.28); }
-.empty { padding:56px 32px; text-align:center; color:var(--muted); font-size:14px; }
+
+.empty { padding:48px 24px; text-align:center; color:var(--muted); font-size:13px; }
 .num { font-variant-numeric:tabular-nums; }
+
+/* ── Tooltip ─────────────────────────────────── */
 .has-tooltip { position:relative; display:inline-block; cursor:help; }
-.has-tooltip::after { content:attr(data-tip); position:absolute; left:50%; bottom:calc(100% + 12px); transform:translateX(-50%); width:max-content; max-width:420px; white-space:pre-line; text-align:left; background:#0b1020; color:var(--text); border:1px solid var(--line); border-radius:14px; padding:12px 14px; box-shadow:0 16px 40px rgba(0,0,0,.45); font-size:12px; line-height:1.55; font-weight:500; opacity:0; visibility:hidden; pointer-events:none; z-index:60; }
+.has-tooltip::after {
+  content:attr(data-tip); position:absolute; left:50%; bottom:calc(100% + 10px);
+  transform:translateX(-50%); width:max-content; max-width:360px; white-space:pre-line;
+  text-align:left; background:#0b1020; color:var(--text); border:1px solid var(--line);
+  border-radius:12px; padding:10px 12px; box-shadow:0 12px 32px rgba(0,0,0,.5);
+  font-size:11px; line-height:1.55; font-weight:500; opacity:0; visibility:hidden;
+  pointer-events:none; z-index:60;
+}
 .has-tooltip:hover::after { opacity:1; visibility:visible; }
-@media(max-width:1100px) { .stats{grid-template-columns:repeat(3,1fr)} th:nth-child(6),td:nth-child(6){display:none} }
-@media(max-width:900px) { .stats{grid-template-columns:repeat(2,1fr)} th:nth-child(8),td:nth-child(8),th:nth-child(5),td:nth-child(5){display:none} }
-@media(max-width:640px) { .wrap{padding:16px} .toolbar{position:static;flex-direction:column} .toolbar select{width:100%} thead{display:none} table,tbody,tr,td{display:block;width:100%} tr{padding:12px 0;border-bottom:1px solid var(--line)} td{border:0;padding:4px 14px} }
+
+/* ── Loading state ───────────────────────────── */
+.loading-row td { padding:40px; text-align:center; color:var(--muted); }
+@keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+.loading-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); margin:0 2px; animation:pulse 1.2s ease infinite; }
+.loading-dot:nth-child(2) { animation-delay:.2s; }
+.loading-dot:nth-child(3) { animation-delay:.4s; }
+
+/* ── Desktop breakpoints ─────────────────────── */
+@media(max-width:1100px) {
+  .stats { grid-template-columns:repeat(3,1fr); }
+  th:nth-child(6),td:nth-child(6) { display:none; }
+}
+@media(max-width:900px) {
+  .stats { grid-template-columns:repeat(3,1fr); }
+  th:nth-child(8),td:nth-child(8),th:nth-child(5),td:nth-child(5) { display:none; }
+}
+
+/* ══════════════════════════════════════════════
+   MOBILE — Complete redesign below 640px
+   ══════════════════════════════════════════════ */
+@media(max-width:640px) {
+  :root { --toolbar-h: 56px; }
+
+  .wrap { padding:14px 12px 80px; }
+
+  /* Header */
+  h1 { font-size:22px; }
+  .subtitle { font-size:12px; }
+
+  /* Stats: horizontal scroll strip */
+  .stats {
+    display:flex; flex-wrap:nowrap; gap:8px;
+    overflow-x:auto; padding-bottom:4px; margin-bottom:14px;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  }
+  .stats::-webkit-scrollbar { display:none; }
+  .stat {
+    flex:0 0 auto; min-width:100px; padding:12px 14px;
+    border-radius:14px;
+  }
+  .stat .label { font-size:8px; }
+  .stat .value { font-size:22px; margin-top:3px; }
+
+  /* Toolbar: sticky, compact */
+  .toolbar {
+    border-radius:14px; padding:10px 12px; gap:8px;
+    flex-wrap:nowrap; overflow-x:visible;
+    position:sticky; top:0;
+  }
+  .search-wrap { flex:1 1 auto; min-width:0; }
+  .filter-toggle { display:flex; }
+
+  /* Filter panel: hidden by default, expands below search row */
+  .filter-panel {
+    display:none; flex-direction:column; gap:8px;
+    width:100%; border-top:1px solid var(--line); padding-top:10px; margin-top:2px;
+  }
+  .filter-panel.open { display:flex; }
+  .filter-panel select { width:100%; min-width:0; font-size:13px; padding:10px 30px 10px 12px; }
+
+  /* Table → Card layout */
+  .table-wrap { border-radius:14px; overflow:clip; }
+  table { display:block; }
+  thead { display:none; }
+  tbody { display:flex; flex-direction:column; gap:0; }
+
+  tbody tr {
+    display:grid;
+    grid-template-columns:auto 1fr;
+    grid-template-rows:auto auto;
+    column-gap:12px;
+    padding:14px 12px;
+    border-bottom:1px solid rgba(37,45,66,.6);
+    align-items:start;
+    position:relative;
+  }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:rgba(124,106,245,.06); }
+
+  /* Cell 1: rank badge — top-left */
+  td.rank-cell {
+    grid-column:1; grid-row:1 / 3;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:flex-start;
+    padding:0; width:auto;
+    padding-top:2px;
+  }
+  .rank-badge { width:32px; height:32px; font-size:11px; min-width:unset; padding:0; }
+
+  /* Cell 2: series info — top-right */
+  td:nth-child(2) {
+    grid-column:2; grid-row:1;
+    padding:0;
+  }
+  .series-cell {
+    flex-direction:row; min-width:0; gap:10px; align-items:flex-start;
+  }
+  .cover { width:56px; height:80px; border-radius:7px; }
+  .title { font-size:13px; max-width:none; line-height:1.3; }
+  .meta { font-size:10px; }
+
+  /* Cell 3 onwards: hidden individually — we use a data-row instead */
+  td:nth-child(3),
+  td:nth-child(4),
+  td:nth-child(5) { display:none; }
+
+  /* Cell 6 (release status) → shown inline in series area via JS */
+  td:nth-child(6) { display:none; }
+
+  /* Cell 7 (score), Cell 8 (drop), Cell 9 (eval) → bottom row */
+  td:nth-child(7),
+  td:nth-child(8),
+  td:nth-child(9) {
+    display:none; /* handled by mobile-meta row */
+  }
+
+  /* Mobile meta row: injected by JS as a real <tr class="mobile-meta"> */
+  tr.mobile-meta {
+    display:flex; flex-wrap:wrap; gap:6px;
+    padding:0 12px 12px;
+    border-bottom:1px solid rgba(37,45,66,.6);
+    grid-column:unset; grid-template-columns:unset;
+    background:transparent;
+    margin-top:-6px;
+  }
+  tr.mobile-meta td {
+    padding:0; border:none; display:block;
+  }
+  .m-chip {
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--surface2); border:1px solid var(--line); border-radius:8px;
+    padding:5px 8px; font-size:11px; font-weight:600; color:var(--muted);
+  }
+  .m-chip .m-label { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); }
+  .m-chip strong { color:var(--text); font-size:12px; font-weight:800; }
+  .m-chip .mini-bar {
+    width:36px; height:3px; border-radius:99px; background:var(--surface3); overflow:hidden;
+  }
+  .m-chip .mini-bar-fill { height:100%; border-radius:99px; }
+  .m-chip .score-bar-fill { background:linear-gradient(90deg,#ef4444 0%,#eab308 50%,#22c55e 100%); }
+  .m-chip .risk-bar-fill { background:linear-gradient(90deg,#22c55e 0%,#eab308 40%,#ef4444 80%); }
+
+  /* Publisher + date shown as small text under title */
+  .series-sub {
+    display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; align-items:center;
+  }
+  .series-sub .pub-pill {
+    font-size:10px; font-weight:700; color:var(--muted);
+    background:var(--surface3); border-radius:6px; padding:2px 6px;
+  }
+  .series-sub .date-text { font-size:10px; color:var(--dim); font-weight:600; }
+
+  .empty { padding:32px 16px; font-size:12px; }
+}
 </style>
 </head>
 <body>
@@ -77,41 +340,51 @@ tbody tr:hover { background:rgba(124,106,245,.06); }
   </header>
   <section class="stats" id="stats"></section>
   <section class="toolbar">
-    <div class="search-wrap"><input id="search" placeholder="Tìm tên truyện, nhà phát hành, mã series..." /></div>
-    <select id="statusFilter"><option value="">Tất cả đánh giá</option></select>
-    <select id="publisherFilter"><option value="">Tất cả nhà phát hành</option></select>
-    <select id="releaseStatusFilter">
-      <option value="">Tất cả trạng thái</option>
-      <option value="Đang phát hành" selected>Đang phát hành</option>
-      <option value="Lâu lắm rồi chưa có tập mới">Lâu rồi chưa ra</option>
-      <option value="Đã bắt kịp bản gốc JP">Đã bắt kịp JP</option>
-      <option value="Drop">Đã drop</option>
-      <option value="Hoàn thành">Hoàn thành</option>
-    </select>
-    <select id="sortBy">
-      <option value="scoreRelease" selected>Điểm LN → Ngày ra</option>
-      <option value="rank">Xếp hạng gốc</option>
-      <option value="scoreDesc">Điểm cao → thấp</option>
-      <option value="scoreAsc">Điểm thấp → cao</option>
-      <option value="releaseDesc">Phát hành mới nhất</option>
-      <option value="viewsDesc">Lượt xem TB</option>
-      <option value="volumesDesc">Số tập VN</option>
-      <option value="dropRiskDesc">Drop cao → thấp</option>
-    </select>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="search" placeholder="Tìm tên truyện, nhà phát hành, mã series..." />
+    </div>
+    <button class="filter-toggle" id="filterToggle" aria-label="Bộ lọc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      Lọc
+      <span class="filter-badge" id="filterBadge" hidden>0</span>
+    </button>
+    <div class="filter-panel" id="filterPanel">
+      <select id="statusFilter"><option value="">Tất cả đánh giá</option></select>
+      <select id="publisherFilter"><option value="">Tất cả nhà phát hành</option></select>
+      <select id="releaseStatusFilter">
+        <option value="">Tất cả trạng thái</option>
+        <option value="Đang phát hành" selected>Đang phát hành</option>
+        <option value="Lâu lắm rồi chưa có tập mới">Lâu rồi chưa ra</option>
+        <option value="Đã bắt kịp bản gốc JP">Đã bắt kịp JP</option>
+        <option value="Drop">Đã drop</option>
+        <option value="Hoàn thành">Hoàn thành</option>
+      </select>
+      <select id="sortBy">
+        <option value="scoreRelease" selected>Điểm LN → Ngày ra</option>
+        <option value="rank">Xếp hạng gốc</option>
+        <option value="scoreDesc">Điểm cao → thấp</option>
+        <option value="scoreAsc">Điểm thấp → cao</option>
+        <option value="releaseDesc">Phát hành mới nhất</option>
+        <option value="viewsDesc">Lượt xem TB</option>
+        <option value="volumesDesc">Số tập VN</option>
+        <option value="dropRiskDesc">Drop cao → thấp</option>
+      </select>
+    </div>
   </section>
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th data-sort="rank" style="width:64px">Hạng</th>
+          <th data-sort="rank" style="width:54px">Hạng</th>
           <th>Series</th>
-          <th data-sort="volumes" style="width:76px">Số tập</th>
-          <th data-sort="release" style="width:140px">Ngày phát hành</th>
-          <th style="width:130px">Nhà PH</th>
-          <th data-sort="releaseStatus" style="width:140px">Trạng thái</th>
-          <th data-sort="score" style="width:110px">Điểm đánh giá</th>
-          <th data-sort="dropRisk" style="width:100px">Khả năng drop</th>
-          <th data-sort="status" style="width:100px">Đánh giá</th>
+          <th data-sort="volumes" style="width:70px">Số tập</th>
+          <th data-sort="release" style="width:130px">Ngày phát hành</th>
+          <th style="width:120px">Nhà PH</th>
+          <th data-sort="releaseStatus" style="width:130px">Trạng thái</th>
+          <th data-sort="score" style="width:100px">Điểm đánh giá</th>
+          <th data-sort="dropRisk" style="width:90px">Khả năng drop</th>
+          <th data-sort="status" style="width:90px">Đánh giá</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -152,6 +425,22 @@ const releaseStatusClass = r => {
   if (rs === 'Lâu lắm rồi chưa có tập mới') return 'rs-dead';
   if (rs === 'Đã bắt kịp bản gốc JP') return 'rs-caught-up';
   return 'rs-publishing';
+};
+const RELEASE_STATUS_ORDER = {
+  'Đang phát hành': 0,
+  'Lâu lắm rồi chưa có tập mới': 1,
+  'Drop': 2,
+  'Đã bắt kịp bản gốc JP': 3,
+  'Hoàn thành': 4,
+};
+const releaseStatusPriority = r => RELEASE_STATUS_ORDER[releaseStatus(r)] ?? 99;
+const withReleaseStatusPriority = comparator => (a, b) => {
+  // Only apply this custom grouping when the Trạng thái filter is set to "Tất cả trạng thái".
+  if (!state.releaseStatus) {
+    const statusDiff = releaseStatusPriority(a) - releaseStatusPriority(b);
+    if (statusDiff !== 0) return statusDiff;
+  }
+  return comparator(a, b);
 };
 function scoreTooltip(r) {
   const parts = String(r['Score Components'] || r['Evaluation Basis'] || '').split('\n').filter(Boolean);
@@ -200,14 +489,21 @@ function getFilteredRows() {
     return (!q || blob.includes(q)) && (!state.status || r.Evalution === state.status) && (!state.publisher || r.Publisher === state.publisher) && (!state.releaseStatus || rs === state.releaseStatus);
   });
   const sorters = {
-    rank: (a,b) => Number(a.Rank||0) - Number(b.Rank||0),
-    scoreRelease: (a,b) => (Number(b['LN Score']||0) - Number(a['LN Score']||0)) || (new Date(b['Max Release At']||0) - new Date(a['Max Release At']||0)),
-    scoreDesc: (a,b) => Number(b['LN Score']||0) - Number(a['LN Score']||0),
-    scoreAsc: (a,b) => Number(a['LN Score']||0) - Number(b['LN Score']||0),
-    releaseDesc: (a,b) => new Date(b['Max Release At']||0) - new Date(a['Max Release At']||0),
-    viewsDesc: (a,b) => Number(b['Average View Count']||0) - Number(a['Average View Count']||0),
-    volumesDesc: (a,b) => Number(b['Number of Volumes']||0) - Number(a['Number of Volumes']||0),
-    dropRiskDesc: (a,b) => Number(b['Khả năng drop (Drop %)']||0) - Number(a['Khả năng drop (Drop %)']||0),
+    rank: withReleaseStatusPriority((a,b) => Number(a.Rank||0) - Number(b.Rank||0)),
+    scoreRelease: withReleaseStatusPriority((a,b) =>
+      (Number(b['LN Score']||0) - Number(a['LN Score']||0)) ||
+      (new Date(b['Max Release At']||0) - new Date(a['Max Release At']||0))
+    ),
+    scoreDesc: withReleaseStatusPriority((a,b) => Number(b['LN Score']||0) - Number(a['LN Score']||0)),
+    scoreAsc: withReleaseStatusPriority((a,b) => Number(a['LN Score']||0) - Number(b['LN Score']||0)),
+    releaseDesc: withReleaseStatusPriority((a,b) => new Date(b['Max Release At']||0) - new Date(a['Max Release At']||0)),
+    viewsDesc: withReleaseStatusPriority((a,b) => Number(b['Average View Count']||0) - Number(a['Average View Count']||0)),
+    volumesDesc: withReleaseStatusPriority((a,b) => Number(b['Number of Volumes']||0) - Number(a['Number of Volumes']||0)),
+    dropRiskDesc: withReleaseStatusPriority((a,b) => Number(b['Khả năng drop (Drop %)']||0) - Number(a['Khả năng drop (Drop %)']||0)),
+    releaseStatus: (a,b) =>
+      (releaseStatusPriority(a) - releaseStatusPriority(b)) ||
+      (Number(b['LN Score']||0) - Number(a['LN Score']||0)) ||
+      (new Date(b['Max Release At']||0) - new Date(a['Max Release At']||0)),
   };
   rows.sort(sorters[state.sortBy] || sorters.scoreRelease);
   return rows;
@@ -246,7 +542,7 @@ function render() {
 });
 document.querySelectorAll('th[data-sort]').forEach(th => {
   th.addEventListener('click', () => {
-    const map = {rank:'scoreRelease', score:'scoreRelease', dropRisk:'dropRiskDesc', volumes:'volumesDesc', release:'releaseDesc', views:'viewsDesc', status:'scoreRelease', releaseStatus:'scoreRelease'};
+    const map = {rank:'scoreRelease', score:'scoreRelease', dropRisk:'dropRiskDesc', volumes:'volumesDesc', release:'releaseDesc', views:'viewsDesc', status:'scoreRelease', releaseStatus:'releaseStatus'};
     state.sortBy = map[th.dataset.sort] || 'scoreRelease';
     $('sortBy').value = state.sortBy;
     render();
@@ -318,7 +614,98 @@ async function loadDataFromSupabase() {
 }
 
 document.addEventListener('DOMContentLoaded', loadDataFromSupabase);
+// ── Mobile filter toggle ──────────────────────────────────
+const filterToggle = document.getElementById('filterToggle');
+const filterPanel = document.getElementById('filterPanel');
+const filterBadge = document.getElementById('filterBadge');
+
+function countActiveFilters() {
+  let n = 0;
+  if (state.status) n++;
+  if (state.publisher) n++;
+  if (state.releaseStatus) n++;
+  return n;
+}
+function updateFilterBadge() {
+  const n = countActiveFilters();
+  filterBadge.hidden = n === 0;
+  filterBadge.textContent = n;
+  filterToggle.classList.toggle('active', n > 0);
+}
+
+filterToggle.addEventListener('click', () => {
+  const open = filterPanel.classList.toggle('open');
+  filterToggle.setAttribute('aria-expanded', open);
+});
+
+// ── Mobile card row injection ─────────────────────────────
+const isMobile = () => window.innerWidth <= 640;
+
+function buildMobileMetaRow(r, score, riskVal) {
+  const scoreBar = Math.max(0, Math.min(100, score * 10));
+  const riskBar  = Math.max(0, Math.min(100, riskVal));
+  const pctVal   = n => { const x = Number(n || 0); return x <= 1 ? Math.round(x * 100) : Math.round(x); };
+  return `<tr class="mobile-meta">
+    <td colspan="9">
+      <span class="m-chip">
+        <span class="m-label">Điểm</span>
+        <strong>${score.toFixed(1)}</strong>
+        <span class="mini-bar"><span class="mini-bar-fill score-bar-fill" style="width:${scoreBar}%"></span></span>
+      </span>
+      <span class="m-chip">
+        <span class="m-label">Drop</span>
+        <strong>${pctVal(r['Khả năng drop (Drop %)'])}%</strong>
+        <span class="mini-bar"><span class="mini-bar-fill risk-bar-fill" style="width:${riskBar}%"></span></span>
+      </span>
+      <span class="pill pill-${safe(r.Evalution)}" style="font-size:10px;padding:3px 8px">${safe(evalLabel(r.Evalution))}</span>
+      <span class="pill ${releaseStatusClass(r)}" style="font-size:10px;padding:3px 8px">${safe(releaseStatus(r))}</span>
+    </td>
+  </tr>`;
+}
+
+const _origRender = render;
+function renderWithMobile() {
+  const rows = getFilteredRows();
+  updateStats(rows);
+  $('empty').hidden = rows.length !== 0;
+  updateFilterBadge();
+
+  $('rows').innerHTML = rows.map((r, idx) => {
+    const score    = Number(r['LN Score'] || 0);
+    const scoreBar = Math.max(0, Math.min(100, score * 10));
+    const pctVal   = n => { const x = Number(n || 0); return x <= 1 ? Math.round(x * 100) : Math.round(x); };
+    const riskBar  = Math.max(0, Math.min(100, pctVal(r['Khả năng drop (Drop %)'])));
+    const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : '';
+
+    const mainRow = `<tr>
+      <td class="rank-cell"><span class="rank-badge ${rankClass}">#${idx + 1}</span></td>
+      <td><div class="series-cell">
+        <img class="cover" src="${safe(r['Cover URL'])}" loading="lazy" onerror="this.style.visibility='hidden'" />
+        <div>
+          <div class="title">${safe(r['Series Title'])}</div>
+          <div class="meta">ID ${safe(r['Series ID'])} · ${safe(r['Series Code'])}</div>
+          <div class="series-sub">
+            <span class="pub-pill">${safe(r.Publisher)}</span>
+            <span class="date-text">${fmtDate(r['Max Release At'])}</span>
+          </div>
+        </div>
+      </div></td>
+      <td class="num">${fmtNum(r['Number of Volumes'])}</td>
+      <td class="num">${fmtDate(r['Max Release At'])}</td>
+      <td>${safe(r.Publisher)}</td>
+      <td><span class="pill ${releaseStatusClass(r)}">${safe(releaseStatus(r))}</span></td>
+      <td><div class="has-tooltip" data-tip="${safeAttr(scoreTooltip(r))}"><div class="score-num">${score.toFixed(1)}</div><div class="score-bar-wrap"><div class="score-bar-fill" style="width:${scoreBar}%"></div></div></div></td>
+      <td><div class="has-tooltip" data-tip="${safeAttr(dropTooltip(r))}"><div class="risk-num">${fmtPercent(r['Khả năng drop (Drop %)'])}</div><div class="risk-bar-wrap"><div class="risk-bar-fill" style="width:${riskBar}%"></div></div></div></td>
+      <td><span class="pill pill-${safe(r.Evalution)}">${safe(evalLabel(r.Evalution))}</span></td>
+    </tr>`;
+
+    const metaRow = buildMobileMetaRow(r, score, riskBar);
+    return mainRow + metaRow;
+  }).join('');
+}
+
+// Override the render function
+window.render = renderWithMobile;
 
 </script>
-</body>
-</html>
+</body></html>
