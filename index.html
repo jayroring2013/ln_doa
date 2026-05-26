@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bảng xếp hạng Light Novel</title>
+<style>
+:root {
+  --bg:#0c0e16; --surface:#131722; --surface2:#1a1f2e; --surface3:#222840;
+  --text:#e8ecf4; --muted:#8892aa; --dim:#4a5470; --line:#252d42;
+  --accent:#7c6af5; --good:#22c55e; --limping:#eab308; --dead:#f97316; --dropped:#ef4444; --completed:#38bdf8;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.wrap { max-width:1440px; margin:0 auto; padding:32px 28px 64px; }
+.header { margin-bottom:28px; }
+.header-eyebrow { font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+h1 { font-size:clamp(26px,3.5vw,44px); font-weight:900; letter-spacing:-.03em; line-height:1.1; }
+.subtitle { margin-top:10px; color:var(--muted); font-size:14px; line-height:1.6; max-width:760px; }
+.stats { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:20px; }
+.stat { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 18px; }
+.stat .label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+.stat .value { font-size:28px; font-weight:900; margin-top:6px; }
+.toolbar { background:rgba(19,23,34,.94); border:1px solid var(--line); border-radius:18px; padding:14px 16px; margin-bottom:20px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; position:sticky; top:0; z-index:20; backdrop-filter:blur(16px); }
+.search-wrap { flex:1 1 260px; }
+input, select { background:var(--surface2); border:1px solid var(--line); border-radius:12px; color:var(--text); font:inherit; font-size:13px; padding:10px 12px; outline:none; }
+input { width:100%; font-size:14px; }
+select { min-width:140px; cursor:pointer; }
+input:focus, select:focus { border-color:var(--accent); }
+.table-wrap { border-radius:20px; border:1px solid var(--line); background:var(--surface); overflow:clip; }
+table { width:100%; border-collapse:collapse; }
+thead { background:var(--surface2); position:sticky; top:65px; z-index:10; }
+th { padding:12px 14px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); text-align:left; white-space:nowrap; cursor:pointer; }
+td { padding:12px 14px; border-bottom:1px solid rgba(37,45,66,.6); vertical-align:middle; font-size:14px; }
+tbody tr:hover { background:rgba(124,106,245,.06); }
+.rank-cell { text-align:center; width:56px; }
+.rank-badge { display:inline-flex; align-items:center; justify-content:center; min-width:36px; height:36px; padding:0 8px; border-radius:10px; font-size:13px; font-weight:900; background:var(--surface3); color:var(--muted); }
+.rank-1 { background:linear-gradient(135deg,#f6d860,#e8a800); color:#5a3b00; }
+.rank-2 { background:linear-gradient(135deg,#d8dde8,#a5afc0); color:#2a3040; }
+.rank-3 { background:linear-gradient(135deg,#e8a86e,#c47730); color:#3d1e05; }
+.series-cell { display:flex; gap:12px; align-items:center; min-width:300px; }
+.cover { width:68px; height:96px; object-fit:cover; border-radius:8px; flex-shrink:0; background:var(--surface3); box-shadow:0 4px 12px rgba(0,0,0,.4); }
+.title { font-weight:800; font-size:14px; line-height:1.3; color:var(--text); max-width:340px; }
+.meta { margin-top:4px; font-size:11px; color:var(--dim); font-weight:600; }
+.score-num { font-size:20px; font-weight:900; line-height:1; }
+.risk-num { font-size:16px; font-weight:900; line-height:1; }
+.score-bar-wrap, .risk-bar-wrap { width:72px; height:5px; border-radius:99px; background:var(--surface3); overflow:hidden; margin-top:6px; }
+.score-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#ef4444 0%,#eab308 50%,#22c55e 100%); }
+.risk-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#22c55e 0%,#eab308 40%,#ef4444 80%); }
+.pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; font-size:11px; font-weight:800; letter-spacing:.02em; white-space:nowrap; }
+.pill-Completed { background:rgba(56,189,248,.15); color:#38bdf8; border:1px solid rgba(56,189,248,.25); }
+.pill-Good { background:rgba(34,197,94,.15); color:#4ade80; border:1px solid rgba(34,197,94,.25); }
+.pill-Limping { background:rgba(234,179,8,.15); color:#facc15; border:1px solid rgba(234,179,8,.25); }
+.pill-Dead { background:rgba(249,115,22,.15); color:#fb923c; border:1px solid rgba(249,115,22,.25); }
+.pill-Dropped { background:rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(239,68,68,.25); }
+.rs-publishing { background:rgba(34,197,94,.12); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
+.rs-completed { background:rgba(56,189,248,.12); color:#7dd3fc; border:1px solid rgba(56,189,248,.2); }
+.rs-dead { background:rgba(249,115,22,.12); color:#fb923c; border:1px solid rgba(249,115,22,.2); }
+.rs-dropped { background:rgba(239,68,68,.12); color:#fca5a5; border:1px solid rgba(239,68,68,.2); }
+.rs-caught-up { background:rgba(124,106,245,.15); color:#a78bfa; border:1px solid rgba(124,106,245,.28); }
+.empty { padding:56px 32px; text-align:center; color:var(--muted); font-size:14px; }
+.num { font-variant-numeric:tabular-nums; }
+.has-tooltip { position:relative; display:inline-block; cursor:help; }
+.has-tooltip::after { content:attr(data-tip); position:absolute; left:50%; bottom:calc(100% + 12px); transform:translateX(-50%); width:max-content; max-width:420px; white-space:pre-line; text-align:left; background:#0b1020; color:var(--text); border:1px solid var(--line); border-radius:14px; padding:12px 14px; box-shadow:0 16px 40px rgba(0,0,0,.45); font-size:12px; line-height:1.55; font-weight:500; opacity:0; visibility:hidden; pointer-events:none; z-index:60; }
+.has-tooltip:hover::after { opacity:1; visibility:visible; }
+@media(max-width:1100px) { .stats{grid-template-columns:repeat(3,1fr)} th:nth-child(6),td:nth-child(6){display:none} }
+@media(max-width:900px) { .stats{grid-template-columns:repeat(2,1fr)} th:nth-child(8),td:nth-child(8),th:nth-child(5),td:nth-child(5){display:none} }
+@media(max-width:640px) { .wrap{padding:16px} .toolbar{position:static;flex-direction:column} .toolbar select{width:100%} thead{display:none} table,tbody,tr,td{display:block;width:100%} tr{padding:12px 0;border-bottom:1px solid var(--line)} td{border:0;padding:4px 14px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <div class="header-eyebrow">Cộng đồng Light Novel Việt Nam</div>
+    <h1>Bảng xếp hạng Light Novel</h1>
+    <p class="subtitle">Xếp hạng theo Điểm LN, ngày phát hành gần nhất, tình trạng phát hành tại Việt Nam và khả năng bị drop. Đã cập nhật thêm ID 968. Dữ liệu được tính lại từ workbook mới nhất.</p>
+  </header>
+  <section class="stats" id="stats"></section>
+  <section class="toolbar">
+    <div class="search-wrap"><input id="search" placeholder="Tìm tên truyện, nhà phát hành, mã series..." /></div>
+    <select id="statusFilter"><option value="">Tất cả đánh giá</option></select>
+    <select id="publisherFilter"><option value="">Tất cả nhà phát hành</option></select>
+    <select id="releaseStatusFilter">
+      <option value="">Tất cả trạng thái</option>
+      <option value="Đang phát hành" selected>Đang phát hành</option>
+      <option value="Lâu lắm rồi chưa có tập mới">Lâu rồi chưa ra</option>
+      <option value="Đã bắt kịp bản gốc JP">Đã bắt kịp JP</option>
+      <option value="Drop">Đã drop</option>
+      <option value="Hoàn thành">Hoàn thành</option>
+    </select>
+    <select id="sortBy">
+      <option value="scoreRelease" selected>Điểm LN → Ngày ra</option>
+      <option value="rank">Xếp hạng gốc</option>
+      <option value="scoreDesc">Điểm cao → thấp</option>
+      <option value="scoreAsc">Điểm thấp → cao</option>
+      <option value="releaseDesc">Phát hành mới nhất</option>
+      <option value="viewsDesc">Lượt xem TB</option>
+      <option value="volumesDesc">Số tập VN</option>
+      <option value="dropRiskDesc">Drop cao → thấp</option>
+    </select>
+  </section>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-sort="rank" style="width:64px">Hạng</th>
+          <th>Series</th>
+          <th data-sort="volumes" style="width:76px">Số tập</th>
+          <th data-sort="release" style="width:140px">Ngày phát hành</th>
+          <th style="width:130px">Nhà PH</th>
+          <th data-sort="releaseStatus" style="width:140px">Trạng thái</th>
+          <th data-sort="score" style="width:110px">Điểm đánh giá</th>
+          <th data-sort="dropRisk" style="width:100px">Khả năng drop</th>
+          <th data-sort="status" style="width:100px">Đánh giá</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>Không có series nào phù hợp với bộ lọc.</div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://zragvkqsslfyarjbjmmz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyYWd2a3Fzc2xmeWFyamJqbW16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjYzMzY4NCwiZXhwIjoyMDg4MjA5Njg0fQ.V2VYm1pzKLbylTkHS4nTX8T6dMqpRdENpMWLydC_jmE";
+const SUPABASE_TABLE = "ln_series_ranking";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+});
+
+let DATA = [];
+let state = { search:'', status:'', publisher:'', releaseStatus:'Đang phát hành', sortBy:'scoreRelease' };
+const $ = id => document.getElementById(id);
+const safe = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const safeAttr = s => safe(s).replace(/\n/g, '&#10;');
+const fmtNum = n => n == null || n === '' ? '—' : Number(n).toLocaleString('vi-VN', { maximumFractionDigits: 1 });
+const fmtMoney = n => n == null || n === '' ? '—' : Number(n).toLocaleString('vi-VN') + '₫';
+const fmtDate = d => d ? new Date(d).toLocaleDateString('vi-VN', { year:'numeric', month:'2-digit', day:'2-digit' }) : '—';
+const pctVal = n => { const x = Number(n || 0); return x <= 1 ? Math.round(x * 100) : Math.round(x); };
+const fmtPercent = n => `${pctVal(n)}%`;
+const evalLabel = s => ({Completed:'Hoàn thành', Good:'Tốt', Limping:'Cầm chừng', Dead:'Gần chết', Dropped:'Đã drop'}[s] || s || '—');
+const releaseStatus = r => r['Trạng thái'] || (r.Evalution === 'Completed' ? 'Hoàn thành' : r.Evalution === 'Dead' ? 'Lâu lắm rồi chưa có tập mới' : r.Evalution === 'Dropped' ? 'Drop' : 'Đang phát hành');
+const releaseStatusClass = r => {
+  const rs = releaseStatus(r);
+  if (rs === 'Hoàn thành') return 'rs-completed';
+  if (rs === 'Drop') return 'rs-dropped';
+  if (rs === 'Lâu lắm rồi chưa có tập mới') return 'rs-dead';
+  if (rs === 'Đã bắt kịp bản gốc JP') return 'rs-caught-up';
+  return 'rs-publishing';
+};
+function scoreTooltip(r) {
+  const parts = String(r['Score Components'] || r['Evaluation Basis'] || '').split('\n').filter(Boolean);
+  return [
+    `Điểm LN: ${Number(r['LN Score'] || 0).toFixed(1)}/10`,
+    `Tập mới nhất: ${r['Months Since Last Release'] == null ? 'không rõ' : '~' + Number(r['Months Since Last Release']).toFixed(1) + ' tháng trước'}`,
+    `Tiến độ VN/JP: ${fmtNum(r['Number of Volumes'])}/${fmtNum(r['Original Volumes'])} tập`,
+    `Nhịp ra tập TB: ${r['Average Gap Months'] == null ? 'chưa đủ dữ liệu' : '~' + Number(r['Average Gap Months']).toFixed(1) + ' tháng/tập'}`,
+    `Nhà phát hành: ${r.Publisher || '—'} (${r['Publisher Activity'] || 'không rõ'})`,
+    '',
+    'Thành phần điểm:',
+    ...(parts.length ? parts : ['Không có breakdown chi tiết.'])
+  ].join('\n');
+}
+function dropTooltip(r) {
+  const parts = String(r['Drop Components'] || r['Drop % Basis'] || '').split('\n').filter(Boolean);
+  return [
+    `Khả năng drop: ${fmtPercent(r['Khả năng drop (Drop %)'])}`,
+    `Điểm LN liên quan: ${Number(r['LN Score'] || 0).toFixed(1)}/10`,
+    `Khung đánh giá: ${evalLabel(r.Evalution)}`,
+    '',
+    'Thành phần rủi ro:',
+    ...(parts.length ? parts : ['Không có breakdown chi tiết.'])
+  ].join('\n');
+}
+function initFilters() {
+  const order = ['Completed','Good','Limping','Dead','Dropped'];
+  const statuses = [...new Set(DATA.map(d => d.Evalution).filter(Boolean))].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  $('statusFilter').innerHTML += statuses.map(s => `<option value="${safe(s)}">${safe(evalLabel(s))}</option>`).join('');
+  const pubs = [...new Set(DATA.map(d => d.Publisher).filter(Boolean))].sort();
+  $('publisherFilter').innerHTML += pubs.map(p => `<option value="${safe(p)}">${safe(p)}</option>`).join('');
+}
+function updateStats(rows) {
+  const avg = rows.length ? rows.reduce((s,r)=>s + Number(r['LN Score'] || 0),0)/rows.length : 0;
+  const good = rows.filter(r => ['Good','Completed'].includes(r.Evalution)).length;
+  const risky = rows.filter(r => ['Dead','Dropped'].includes(r.Evalution)).length;
+  const completed = rows.filter(r => r.Evalution === 'Completed').length;
+  const items = [['Series hiển thị', rows.length], ['Điểm TB', avg.toFixed(1)], ['Tốt/Hoàn thành', good], ['Gần chết/Đã drop', risky], ['Hoàn thành', completed]];
+  $('stats').innerHTML = items.map(([label,value]) => `<div class="stat"><div class="label">${label}</div><div class="value">${value}</div></div>`).join('');
+}
+function getFilteredRows() {
+  const q = state.search.toLowerCase().trim();
+  let rows = DATA.filter(r => {
+    const rs = releaseStatus(r);
+    const blob = `${r['Series Title']} ${r.Publisher} ${r['Series Code']} ${r.Evalution} ${rs}`.toLowerCase();
+    return (!q || blob.includes(q)) && (!state.status || r.Evalution === state.status) && (!state.publisher || r.Publisher === state.publisher) && (!state.releaseStatus || rs === state.releaseStatus);
+  });
+  const sorters = {
+    rank: (a,b) => Number(a.Rank||0) - Number(b.Rank||0),
+    scoreRelease: (a,b) => (Number(b['LN Score']||0) - Number(a['LN Score']||0)) || (new Date(b['Max Release At']||0) - new Date(a['Max Release At']||0)),
+    scoreDesc: (a,b) => Number(b['LN Score']||0) - Number(a['LN Score']||0),
+    scoreAsc: (a,b) => Number(a['LN Score']||0) - Number(b['LN Score']||0),
+    releaseDesc: (a,b) => new Date(b['Max Release At']||0) - new Date(a['Max Release At']||0),
+    viewsDesc: (a,b) => Number(b['Average View Count']||0) - Number(a['Average View Count']||0),
+    volumesDesc: (a,b) => Number(b['Number of Volumes']||0) - Number(a['Number of Volumes']||0),
+    dropRiskDesc: (a,b) => Number(b['Khả năng drop (Drop %)']||0) - Number(a['Khả năng drop (Drop %)']||0),
+  };
+  rows.sort(sorters[state.sortBy] || sorters.scoreRelease);
+  return rows;
+}
+function render() {
+  const rows = getFilteredRows();
+  updateStats(rows);
+  $('empty').hidden = rows.length !== 0;
+  $('rows').innerHTML = rows.map((r, idx) => {
+    const score = Number(r['LN Score'] || 0);
+    const scoreBar = Math.max(0, Math.min(100, score * 10));
+    const riskBar = Math.max(0, Math.min(100, pctVal(r['Khả năng drop (Drop %)'])));
+    const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : '';
+    return `<tr>
+      <td class="rank-cell"><span class="rank-badge ${rankClass}">#${idx + 1}</span></td>
+      <td><div class="series-cell">
+        <img class="cover" src="${safe(r['Cover URL'])}" loading="lazy" onerror="this.style.visibility='hidden'" />
+        <div><div class="title">${safe(r['Series Title'])}</div><div class="meta">ID ${safe(r['Series ID'])} · ${safe(r['Series Code'])}</div></div>
+      </div></td>
+      <td class="num">${fmtNum(r['Number of Volumes'])}</td>
+      <td class="num">${fmtDate(r['Max Release At'])}</td>
+      <td>${safe(r.Publisher)}</td>
+      <td><span class="pill ${releaseStatusClass(r)}">${safe(releaseStatus(r))}</span></td>
+      <td><div class="has-tooltip" data-tip="${safeAttr(scoreTooltip(r))}"><div class="score-num">${score.toFixed(1)}</div><div class="score-bar-wrap"><div class="score-bar-fill" style="width:${scoreBar}%"></div></div></div></td>
+      <td><div class="has-tooltip" data-tip="${safeAttr(dropTooltip(r))}"><div class="risk-num">${fmtPercent(r['Khả năng drop (Drop %)'])}</div><div class="risk-bar-wrap"><div class="risk-bar-fill" style="width:${riskBar}%"></div></div></div></td>
+      <td><span class="pill pill-${safe(r.Evalution)}">${safe(evalLabel(r.Evalution))}</span></td>
+    </tr>`;
+  }).join('');
+}
+['search','statusFilter','publisherFilter','releaseStatusFilter','sortBy'].forEach(id => {
+  $(id).addEventListener('input', e => {
+    const key = id === 'statusFilter' ? 'status' : id === 'publisherFilter' ? 'publisher' : id === 'releaseStatusFilter' ? 'releaseStatus' : id;
+    state[key] = e.target.value;
+    render();
+  });
+});
+document.querySelectorAll('th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const map = {rank:'scoreRelease', score:'scoreRelease', dropRisk:'dropRiskDesc', volumes:'volumesDesc', release:'releaseDesc', views:'viewsDesc', status:'scoreRelease', releaseStatus:'scoreRelease'};
+    state.sortBy = map[th.dataset.sort] || 'scoreRelease';
+    $('sortBy').value = state.sortBy;
+    render();
+  });
+});
+
+async function loadDataFromSupabase() {
+  const rowsEl = document.getElementById('rows');
+  const emptyEl = document.getElementById('empty');
+
+  if (rowsEl) {
+    rowsEl.innerHTML = `
+      <tr>
+        <td colspan="9" style="padding:32px;text-align:center;color:#8892aa">
+          Đang tải dữ liệu từ Supabase...
+        </td>
+      </tr>
+    `;
+  }
+
+  const { data, error } = await supabaseClient
+    .from(SUPABASE_TABLE)
+    .select('*')
+    .order('ln_score', { ascending: false })
+    .order('max_release_at', { ascending: false });
+
+  if (error) {
+    console.error('Supabase load error:', error);
+    if (rowsEl) rowsEl.innerHTML = '';
+    if (emptyEl) {
+      emptyEl.hidden = false;
+      emptyEl.textContent = 'Không tải được dữ liệu từ Supabase. Kiểm tra SUPABASE_URL, anon key, RLS policy hoặc table name.';
+    }
+    return;
+  }
+
+  DATA = (data || []).map((row, index) => ({
+    Rank: index + 1,
+    'Series Title': row.series_title,
+    'Series ID': row.series_id,
+    'Series Code': row.series_code,
+    'Number of Volumes': Number(row.number_of_volumes ?? 0),
+    'Average Price': Number(row.average_price ?? 0),
+    'Max Release At': row.max_release_at,
+    'Average View Count': Number(row.average_view_count ?? 0),
+    Publisher: row.publisher,
+    'Original Volumes': Number(row.original_volumes ?? 0),
+    'Original Status': row.original_status,
+    Evalution: row.evalution,
+    'Evaluation Basis': row.evaluation_basis,
+    'LN Score': Number(row.ln_score ?? 0),
+    'Trạng thái': row.trang_thai,
+    'Khả năng drop (Drop %)': Number(row.drop_percent ?? 0),
+    'Drop % Basis': row.drop_basis,
+    'Average Gap Months': row.average_gap_months,
+    'Months Since Last Release': row.months_since_last_release,
+    'Completion Ratio': row.completion_ratio,
+    'Publisher Activity': row.publisher_activity,
+    'Publisher Releases Last 24M': row.publisher_releases_last_24m,
+    'Score Components': row.score_components,
+    'Drop Components': row.drop_components,
+    'Cover URL': row.cover_url,
+    'Cover Source Title': row.cover_source_title,
+  }));
+
+  // Rebuild filters only after DATA is loaded.
+  initFilters();
+  render();
+}
+
+document.addEventListener('DOMContentLoaded', loadDataFromSupabase);
+
+</script>
+</body>
+</html>
