@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bảng xếp hạng Light Novel VN còn sống hay đã tèo? </title>
+<title>Bảng xếp hạng Light Novel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -162,6 +162,11 @@ tbody tr:hover { background:rgba(124,106,245,.06); }
 
 .empty { padding:48px 24px; text-align:center; color:var(--muted); font-size:13px; }
 .num { font-variant-numeric:tabular-nums; }
+/* Mobile-only elements: hidden on desktop, shown only inside @media(max-width:640px) */
+tr.mobile-meta { display:none !important; }
+.series-sub { display:none; }
+.filter-toggle { display:none; }
+.filter-panel { display:contents; }
 
 /* ── Tooltip ─────────────────────────────────── */
 .has-tooltip { position:relative; display:inline-block; cursor:help; }
@@ -225,14 +230,6 @@ tbody tr:hover { background:rgba(124,106,245,.06); }
     position:sticky; top:0;
   }
   .search-wrap { flex:1 1 auto; min-width:0; }
-  .filter-toggle { display:flex; }
-
-  /* Filter panel: hidden by default, expands below search row */
-  .filter-panel {
-    display:none; flex-direction:column; gap:8px;
-    width:100%; border-top:1px solid var(--line); padding-top:10px; margin-top:2px;
-  }
-  .filter-panel.open { display:flex; }
   .filter-panel select { width:100%; min-width:0; font-size:13px; padding:10px 30px 10px 12px; }
 
   /* Table → Card layout */
@@ -290,6 +287,13 @@ tbody tr:hover { background:rgba(124,106,245,.06); }
   td:nth-child(9) {
     display:none; /* handled by mobile-meta row */
   }
+
+  /* Re-enable mobile-only elements inside this breakpoint */
+  tr.mobile-meta { display:flex !important; }
+  .series-sub { display:flex; }
+  .filter-toggle { display:flex; }
+  .filter-panel { display:none; }
+  .filter-panel.open { display:flex; }
 
   /* Mobile meta row: injected by JS as a real <tr class="mobile-meta"> */
   tr.mobile-meta {
