@@ -160,7 +160,19 @@ def calculate_drop(row, score, evalution, months, ratio, jp_done, trang_thai):
     vn = safe_float(row.get("Number of Volumes"), 0) or 0
     jp = safe_float(row.get("Original Volumes"), None)
     avg_gap = safe_float(row.get("Average Gap Months"), None)
+    recent_gap = safe_float(row.get("Recent Gap Months"), None)
     pub24 = safe_float(row.get("Publisher Releases Last 24M"), 0) or 0
+    pub12 = safe_float(row.get("Publisher Releases Last 12M"), 0) or 0
+    series24 = safe_float(row.get("Series Releases Last 24M"), 0) or 0
+    series12 = safe_float(row.get("Series Releases Last 12M"), 0) or 0
+
+    # Weighted effective gap: 60% recent cadence, 40% historical average
+    if recent_gap is not None and avg_gap is not None:
+        effective_gap = round(0.4 * avg_gap + 0.6 * recent_gap, 1)
+    elif recent_gap is not None:
+        effective_gap = recent_gap
+    else:
+        effective_gap = avg_gap
 
     if evalution == "Completed":
         return 0.0, "Series đã hoàn thành: 0%"
@@ -213,25 +225,46 @@ def calculate_drop(row, score, evalution, months, ratio, jp_done, trang_thai):
         risk += 10
         components.append("Mới có 1 tập VN: +10%")
 
-    # Average release gap
-    if avg_gap is not None:
-        if avg_gap <= 6:
+    # Effective release gap (4 tiers, no silent zone)
+    if effective_gap is not None:
+        if effective_gap <= 6:
             risk -= 4
-            components.append("Nhịp ra tập nhanh: -4%")
-        elif avg_gap > 18:
-            risk += 12
-            components.append("Nhịp ra tập rất chậm: +12%")
-        elif avg_gap > 12:
+            components.append("Nhịp ra tập nhanh (≤6 tháng): -4%")
+        elif effective_gap <= 12:
+            risk -= 2
+            components.append("Nhịp ra tập ổn định (6–12 tháng): -2%")
+        elif effective_gap <= 18:
             risk += 6
-            components.append("Nhịp ra tập chậm: +6%")
+            components.append("Nhịp ra tập chậm (12–18 tháng): +6%")
+        else:
+            risk += 12
+            components.append("Nhịp ra tập rất chậm (>18 tháng): +12%")
 
-    # Publisher activity
+    # Publisher activity (portfolio-wide 24M signal)
     if pub24 >= 5:
         risk -= 5
-        components.append("Nhà phát hành còn hoạt động: -5%")
+        components.append("Nhà phát hành còn hoạt động (24M): -5%")
     elif pub24 <= 0:
         risk += 8
-        components.append("Nhà phát hành ít hoạt động: +8%")
+        components.append("Nhà phát hành ít hoạt động (24M): +8%")
+
+    # Publisher recent activity — stricter 12M window
+    if pub12 <= 2 and pub24 >= 5:
+        risk += 6
+        components.append("Nhà phát hành đang chậm lại trong 12M gần nhất: +6%")
+
+    # Series-specific release activity (direct signal for this series)
+    if series24 >= 3:
+        risk -= 6
+        components.append("Series ra ≥3 tập trong 24M: -6%")
+    elif series24 == 0 and months > 12:
+        risk += 5
+        components.append("Series không có tập nào trong 24M: +5%")
+
+    # Series recent activity — stricter 12M window
+    if series12 == 0 and months > 6:
+        risk += 5
+        components.append("Series không có tập nào trong 12M gần nhất: +5%")
 
     # JP completed but VN unfinished penalty only after 18 months
     if jp_done and ratio is not None and ratio < 1 and months > 18:
@@ -240,19 +273,19 @@ def calculate_drop(row, score, evalution, months, ratio, jp_done, trang_thai):
             "JP đã hoàn thành nhưng VN chưa xong và quá 18 tháng: +5%"
         )
 
-    # Evaluation band clamp
+    # Evaluation band clamp (widened to preserve outlier signal)
     if evalution == "Good":
-        risk = max(15, min(45, risk))
-        components.append("Khung nhóm Tốt: giữ trong 15–45%")
+        risk = max(10, min(55, risk))
+        components.append("Khung nhóm Tốt: giữ trong 10–55%")
     elif evalution == "Limping":
-        risk = max(35, min(65, risk))
-        components.append("Khung nhóm Cầm chừng: giữ trong 35–65%")
+        risk = max(30, min(70, risk))
+        components.append("Khung nhóm Cầm chừng: giữ trong 30–70%")
     elif evalution == "Dead":
-        risk = max(65, min(85, risk))
-        components.append("Khung nhóm Gần chết: giữ trong 65–85%")
+        risk = max(60, min(88, risk))
+        components.append("Khung nhóm Gần chết: giữ trong 60–88%")
     elif evalution == "Dropped":
-        risk = max(86, min(99, risk))
-        components.append("Khung nhóm Đã drop: giữ trong 86–99%")
+        risk = max(84, min(99, risk))
+        components.append("Khung nhóm Đã drop: giữ trong 84–99%")
 
     return round(risk / 100, 2), "\n".join(components)
 
@@ -269,13 +302,26 @@ def score_series(row):
     latest = row.get("Max Release At")
 
     avg_gap = safe_float(row.get("Average Gap Months"), None)
+    recent_gap = safe_float(row.get("Recent Gap Months"), None)
     pub24 = safe_float(row.get("Publisher Releases Last 24M"), 0) or 0
+    pub12 = safe_float(row.get("Publisher Releases Last 12M"), 0) or 0
+    series24 = safe_float(row.get("Series Releases Last 24M"), 0) or 0
+    series12 = safe_float(row.get("Series Releases Last 12M"), 0) or 0
 
     months = months_since(latest)
     jp_done = original_completed(original_status)
 
     ratio = vn / jp if jp and jp > 0 else None
     caught_up = jp and jp > 0 and vn >= jp
+
+    # Weighted effective gap: 60% recent cadence, 40% historical average.
+    # Series that have slowed down recently are penalised faster.
+    if recent_gap is not None and avg_gap is not None:
+        effective_gap = round(0.4 * avg_gap + 0.6 * recent_gap, 1)
+    elif recent_gap is not None:
+        effective_gap = recent_gap
+    else:
+        effective_gap = avg_gap
 
     components = []
 
@@ -284,11 +330,11 @@ def score_series(row):
     # --------------------------------------------------------
     if vn <= 0:
         evalution = "Unreleased"
-        score = 0.0
+        score = np.nan
         trang_thai = "Có bản quyền nhưng chưa phát hành"
         drop = 0.50
 
-        score_basis = "Đã có bản quyền nhưng chưa phát hành tập nào: LN Score = 0."
+        score_basis = "Đã có bản quyền nhưng chưa phát hành tập nào: LN Score = N/A."
         drop_basis = "Chưa phát hành tập nào: Drop % mặc định = 50%."
 
         return (
@@ -302,14 +348,28 @@ def score_series(row):
 
     # --------------------------------------------------------
     # Case 1: VN completed and JP completed
+    # Score is tiered by how recently completion occurred —
+    # rewarding series that were maintained until the end.
     # --------------------------------------------------------
     if caught_up and jp_done:
         evalution = "Completed"
-        score = 9.5
         trang_thai = "Hoàn thành"
         drop = 0.0
 
-        score_basis = "VN đã hoàn thành theo số tập gốc."
+        months_since_done = months_since(latest)
+        if months_since_done <= 12:
+            score = 9.5
+            score_basis = "VN đã hoàn thành gần đây (≤12 tháng): LN Score = 9.5."
+        elif months_since_done <= 24:
+            score = 9.3
+            score_basis = "VN đã hoàn thành trong 1–2 năm: LN Score = 9.3."
+        elif months_since_done <= 36:
+            score = 9.0
+            score_basis = "VN đã hoàn thành trong 2–3 năm: LN Score = 9.0."
+        else:
+            score = 8.7
+            score_basis = "VN đã hoàn thành nhưng đã lâu (>3 năm): LN Score = 8.7."
+
         drop_basis = "Series đã hoàn thành tại VN: Drop % = 0%"
 
         return (
@@ -353,42 +413,54 @@ def score_series(row):
 
     # --------------------------------------------------------
     # Base score from release recency
+    # ≤3M and 3–6M are split so a release "just under" 6 months
+    # does not receive the same base as a truly fresh release.
+    # Bases are deliberately conservative: recency is a positive
+    # signal but should not guarantee a high score on its own.
     # --------------------------------------------------------
-    if months <= 6:
-        score = 7.2
-        components.append("Tập mới trong 6 tháng: 7.2")
+    if months <= 3:
+        score = 6.8
+        components.append("Tập mới trong 3 tháng: 6.8")
+    elif months <= 6:
+        score = 6.2
+        components.append("Tập mới trong 3–6 tháng: 6.2")
     elif months <= 12:
-        score = 6.6
-        components.append("Có tập mới trong vòng 1 năm: 6.6")
+        score = 5.7
+        components.append("Có tập mới trong vòng 1 năm: 5.7")
     elif months <= 18:
-        score = 5.5
-        components.append("1–1.5 năm chưa có tập mới: 5.5")
+        score = 5.0
+        components.append("1–1.5 năm chưa có tập mới: 5.0")
     elif months <= 24:
-        score = 4.2
-        components.append("Gần 2 năm chưa có tập mới: 4.2")
+        score = 3.8
+        components.append("Gần 2 năm chưa có tập mới: 3.8")
     elif months <= 36:
-        score = 2.8
-        components.append("2–3 năm chưa có tập mới: 2.8")
+        score = 2.5
+        components.append("2–3 năm chưa có tập mới: 2.5")
     else:
         score = 1.5
         components.append("Hơn 3 năm chưa có tập mới: 1.5")
 
     # --------------------------------------------------------
     # Catch-up ratio adjustment
+    # The 40–49% band now carries a slight penalty to close the
+    # previous neutral dead zone between 40% and 50%.
     # --------------------------------------------------------
     if ratio is not None:
         if ratio >= 0.8:
             score += 0.5
             components.append("Gần bắt kịp JP: +0.5")
         elif ratio >= 0.5:
-            score += 0.3
-            components.append("Đã đi được ít nhất nửa bản gốc: +0.3")
+            score += 0.2
+            components.append("Đã đi được ít nhất nửa bản gốc: +0.2")
         elif ratio < 0.25:
             score -= 0.8
             components.append("Còn rất xa bản gốc: -0.8")
         elif ratio < 0.4:
             score -= 0.5
             components.append("Còn khá xa bản gốc: -0.5")
+        elif ratio < 0.5:
+            score -= 0.2
+            components.append("Tỷ lệ bắt kịp 40–49%: -0.2")
 
     # --------------------------------------------------------
     # JP completed but VN unfinished penalty
@@ -401,19 +473,28 @@ def score_series(row):
         )
 
     # --------------------------------------------------------
-    # Average release gap adjustment
+    # Effective release gap adjustment (weighted blend of recent + historical)
+    # Positive bonus only applies when the series has released ≥2 volumes
+    # in the last 12 months — otherwise historical pace is not indicative
+    # of current momentum and should not earn credit.
     # --------------------------------------------------------
-    if avg_gap is None:
+    if effective_gap is None:
         if vn <= 1:
             score -= 0.2
             components.append("Chưa đủ dữ liệu nhịp ra tập: -0.2")
-    elif avg_gap <= 6:
-        score += 0.3
-        components.append("Nhịp ra tập nhanh: +0.3")
-    elif avg_gap <= 12:
-        score += 0.1
-        components.append("Nhịp ra tập bình thường: +0.1")
-    elif avg_gap <= 18:
+    elif effective_gap <= 6:
+        if series12 >= 2:
+            score += 0.3
+            components.append("Nhịp ra tập nhanh + series active gần đây: +0.3")
+        else:
+            components.append("Nhịp ra tập nhanh (lịch sử) nhưng series chưa active 12M: +0.0")
+    elif effective_gap <= 12:
+        if series12 >= 2:
+            score += 0.1
+            components.append("Nhịp ra tập bình thường + series active gần đây: +0.1")
+        else:
+            components.append("Nhịp ra tập bình thường (lịch sử) nhưng series chưa active 12M: +0.0")
+    elif effective_gap <= 18:
         score -= 0.4
         components.append("Nhịp ra tập chậm: -0.4")
     else:
@@ -421,14 +502,41 @@ def score_series(row):
         components.append("Nhịp ra tập rất chậm: -0.8")
 
     # --------------------------------------------------------
-    # Publisher activity
+    # Publisher activity (portfolio-wide 24M signal)
     # --------------------------------------------------------
     if pub24 >= 5:
         score += 0.2
-        components.append("Nhà phát hành còn hoạt động: +0.2")
+        components.append("Nhà phát hành còn hoạt động (24M): +0.2")
     elif pub24 <= 0:
         score -= 0.5
         components.append("Nhà phát hành không có release trong 24 tháng: -0.5")
+
+    # Publisher recent activity — stricter 12M window
+    # Catches publishers who were active 1–2 years ago but have slowed recently.
+    if pub12 <= 2 and pub24 >= 5:
+        score -= 0.4
+        components.append("Nhà phát hành đang chậm lại trong 12M gần nhất: -0.4")
+
+    # --------------------------------------------------------
+    # Series-specific release activity (direct signal for this series)
+    # Positive bonus gated on series12 ≥2: if the series only released
+    # ≤1 volume in the last 12M its 24M count reflects past activity,
+    # not current momentum, so no reward is given.
+    # --------------------------------------------------------
+    if series24 >= 3 and series12 >= 2:
+        score += 0.3
+        components.append("Series ra ≥3 tập trong 24M và active trong 12M: +0.3")
+    elif series24 >= 3 and series12 <= 1:
+        components.append("Series ra ≥3 tập trong 24M nhưng chậm lại trong 12M: +0.0")
+    elif series24 == 0 and months > 12:
+        score -= 0.2
+        components.append("Series không có tập nào trong 24M: -0.2")
+
+    # Series recent activity — stricter 12M window
+    # Penalises a series that has gone quiet in the past year specifically.
+    if series12 == 0 and months > 6:
+        score -= 0.3
+        components.append("Series không có tập nào trong 12M gần nhất: -0.3")
 
     # --------------------------------------------------------
     # One-volume caution
@@ -438,24 +546,36 @@ def score_series(row):
         components.append("Mới có 1 tập VN trong khi JP có nhiều tập: -0.3")
 
     # --------------------------------------------------------
-    # Strong active close-to-JP exception
-    # This must be calculated BEFORE the staleness cap.
-    # Example: 86 Eighty Six
+    # Strong / Near active close-to-JP exception
+    # Must be calculated BEFORE the staleness cap.
+    # Strong (full bypass): ratio ≥80%, effective gap ≤6M, pub ≥5, months ≤18
+    # Near  (partial floor): ratio ≥75%, effective gap ≤8M, pub ≥3, months ≤18
+    # Example of strong: 86 Eighty Six
     # --------------------------------------------------------
     strong_active_close_to_jp = (
         months <= 18
         and ratio is not None
         and ratio >= 0.80
-        and avg_gap is not None
-        and avg_gap <= 6
+        and effective_gap is not None
+        and effective_gap <= 6
         and pub24 >= 5
+    )
+
+    near_active_close_to_jp = (
+        not strong_active_close_to_jp
+        and months <= 18
+        and ratio is not None
+        and ratio >= 0.75
+        and effective_gap is not None
+        and effective_gap <= 8
+        and pub24 >= 3
     )
 
     # --------------------------------------------------------
     # Staleness caps
     # Normal stale series are capped.
-    # Strong active close-to-JP series bypass the 12-month cap
-    # and are kept at minimum 7.1.
+    # Strong active close-to-JP: bypass cap, floor at 7.1.
+    # Near active close-to-JP: partial floor at 6.5.
     # --------------------------------------------------------
     if months > 36:
         score = min(score, 2.5)
@@ -469,14 +589,19 @@ def score_series(row):
     elif months > 18:
         score = min(score, 5.2)
         components.append("Hơn 1.5 năm chưa có tập mới: cap 5.2")
-    elif months > 12 and not strong_active_close_to_jp:
-        score = min(score, 6.3)
-        components.append("Hơn 1 năm chưa có tập mới: cap 6.3")
     elif months > 12 and strong_active_close_to_jp:
         score = max(score, 7.1)
         components.append(
             "Gần bắt kịp JP + nhịp ra nhanh + nhà phát hành active: giữ điểm tối thiểu 7.1"
         )
+    elif months > 12 and near_active_close_to_jp:
+        score = max(score, 6.5)
+        components.append(
+            "Gần bắt kịp JP + nhịp ra hợp lý (near exception): giữ điểm tối thiểu 6.5"
+        )
+    elif months > 12:
+        score = min(score, 6.0)
+        components.append("Hơn 1 năm chưa có tập mới: cap 6.0")
 
     score = round(max(1.0, min(10.0, score)), 1)
 
@@ -638,6 +763,34 @@ def main():
 
     base["Average Gap Months"] = base["series_key"].map(gap_map)
 
+    # --------------------------------------------------------
+    # Recent release gap (average of last 3 unique release dates)
+    # --------------------------------------------------------
+    recent_gap_map = {}
+
+    for key, g in books.groupby("series_key"):
+        dates = sorted(
+            g["Released At"]
+            .dropna()
+            .dt.date
+            .unique()
+        )
+
+        if len(dates) >= 2:
+            last_dates = dates[-min(3, len(dates)):]
+            recent_gaps = [
+                (last_dates[i] - last_dates[i - 1]).days / 30.4375
+                for i in range(1, len(last_dates))
+            ]
+            recent_gap_map[key] = round(
+                sum(recent_gaps) / len(recent_gaps),
+                1,
+            )
+        else:
+            recent_gap_map[key] = np.nan
+
+    base["Recent Gap Months"] = base["series_key"].map(recent_gap_map)
+
     base["Months Since Last Release"] = (
         base["Max Release At"]
         .apply(months_since)
@@ -668,6 +821,7 @@ def main():
     books["Publisher"] = books["series_key"].map(publisher_map)
 
     cutoff24 = TODAY - pd.DateOffset(months=24)
+    cutoff12 = TODAY - pd.DateOffset(months=12)
 
     pub24 = (
         books[books["Released At"] >= cutoff24]
@@ -678,6 +832,48 @@ def main():
     base["Publisher Releases Last 24M"] = (
         base["Publisher"]
         .map(pub24)
+        .fillna(0)
+        .astype(int)
+    )
+
+    # Publisher release count in the most recent 12 months (stricter recency signal)
+    pub12 = (
+        books[books["Released At"] >= cutoff12]
+        .groupby("Publisher")
+        .size()
+    )
+
+    base["Publisher Releases Last 12M"] = (
+        base["Publisher"]
+        .map(pub12)
+        .fillna(0)
+        .astype(int)
+    )
+
+    # Series-specific release count in last 24 months
+    series24_count = (
+        books[books["Released At"] >= cutoff24]
+        .groupby("series_key")
+        .size()
+    )
+
+    base["Series Releases Last 24M"] = (
+        base["series_key"]
+        .map(series24_count)
+        .fillna(0)
+        .astype(int)
+    )
+
+    # Series-specific release count in last 12 months
+    series12_count = (
+        books[books["Released At"] >= cutoff12]
+        .groupby("series_key")
+        .size()
+    )
+
+    base["Series Releases Last 12M"] = (
+        base["series_key"]
+        .map(series12_count)
         .fillna(0)
         .astype(int)
     )
@@ -768,8 +964,8 @@ def main():
                 "Only applies when JP is completed, VN is unfinished, and latest VN release is older than 18 months.",
             ],
             [
-                "Strong active close-to-JP exception",
-                "If months <= 18, ratio >= 80%, average gap <= 6, publisher releases >= 5 in 24M, score is allowed to stay 7.0+ and Evalution is Good.",
+                "Strong / Near active close-to-JP exception",
+                "Strong: months <= 18, ratio >= 80%, effective gap <= 6M, pub >= 5 → score floor 7.1, Evalution Good. Near: ratio >= 75%, gap <= 8M, pub >= 3 → score floor 6.5 (partial benefit).",
             ],
             [
                 "Caught up ongoing JP",
@@ -781,7 +977,31 @@ def main():
             ],
             [
                 "Licensed but unpublished",
-                "If Number of Volumes is 0 (no VN volumes released yet), Evalution is Unreleased, LN Score is 0, Trạng thái is Có bản quyền nhưng chưa phát hành, and Drop % is fixed at 50%.",
+                "If Number of Volumes is 0 (no VN volumes released yet), Evalution is Unreleased, LN Score is N/A (blank), Trạng thái is Có bản quyền nhưng chưa phát hành, and Drop % is fixed at 50%.",
+            ],
+            [
+                "Catch-up ratio gap filled",
+                "Ratio 40–49% now applies a slight penalty of -0.2 to LN Score, closing the previous neutral dead zone between 40% and 50%.",
+            ],
+            [
+                "Effective gap (weighted blend)",
+                "Release cadence is measured as: 60% recent gap (avg of last 3 release dates) + 40% historical average. Series that have slowed down recently are penalised faster.",
+            ],
+            [
+                "Series-specific release activity",
+                "Separate from publisher-wide activity. Series releasing >= 3 volumes in 24M get +0.3 score / -6% drop. Series with 0 releases and stale > 12M get -0.2 score / +5% drop.",
+            ],
+            [
+                "Completed score tiered by recency",
+                "Completed series score 9.5 (<=12M since last release), 9.3 (12–24M), 9.0 (24–36M), or 8.7 (>36M), rewarding recently finished series over ones completed long ago.",
+            ],
+            [
+                "Widened drop % band clamps",
+                "Band clamps widened to let outlier signal through: Good 10–55% (was 15–45%), Limping 30–70% (was 35–65%), Dead 60–88% (was 65–85%), Dropped 84–99% (was 86–99%).",
+            ],
+            [
+                "Drop gap zone fix",
+                "Drop risk gap buckets now cover all cadences: <=6M -4%, 6-12M -2% (new), 12-18M +6%, >18M +12%. The previously silent 6-12M zone now correctly credits stable release pacing.",
             ],
         ],
         columns=[
